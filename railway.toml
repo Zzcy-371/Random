@@ -1,0 +1,4 @@
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 180
+startCommand = "java -Dserver.port=$PORT -jar app.jar"
