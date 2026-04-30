@@ -71,24 +71,13 @@ public class AiController {
         List<Option> options = optionRepository.findByUserIdAndCategoryIdAndIsActiveTrue(userId, catId);
         String categoryName = categoryRepository.findById(catId).map(c -> c.getDisplayName()).orElse("未知");
         List<String> existingNames = options.stream().map(Option::getName).toList();
+        Map<String, Double> prefs = getPreferencesMap(userId, catId);
 
-        // Simplified prompt for suggest
-        String prompt = String.format(
-                "请为「%s」类别推荐3个新选项。已有：%s。只输出3个选项名称，每行一个。",
-                categoryName, String.join("、", existingNames)
-        );
-        String response = null;
-        String error = null;
-        try {
-            response = llmService.chatDirect(prompt);
-        } catch (Exception e) {
-            error = e.getClass().getSimpleName() + ": " + e.getMessage();
-        }
+        List<String> suggestions = llmService.suggestNewOptions(categoryName, existingNames, prefs);
 
         result.put("code", 1);
         result.put("msg", "success");
-        result.put("rawResponse", response);
-        result.put("error", error);
+        result.put("data", suggestions);
         return result;
     }
 

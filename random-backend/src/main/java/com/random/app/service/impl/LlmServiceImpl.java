@@ -86,76 +86,60 @@ public class LlmServiceImpl implements LlmService {
         return chat(prompt);
     }
 
-    @Override
-    public String chatDirect(String userMessage) throws Exception {
-        Map<String, Object> body = Map.of(
-                "model", llmConfig.getModel(),
-                "messages", List.of(
-                        Map.of("role", "system", "content", "你是Random随机决策应用的AI助手，回答简洁友好，使用中文。"),
-                        Map.of("role", "user", "content", userMessage)
-                ),
-                "temperature", 0.7,
-                "max_tokens", 300
-        );
-        String jsonBody = objectMapper.writeValueAsString(body);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(llmConfig.getBaseUrl() + "/chat/completions"))
-                .timeout(Duration.ofMillis(llmConfig.getTimeout()))
-                .header("Authorization", "Bearer " + llmConfig.getApiKey())
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        return "status=" + response.statusCode() + " body=" + response.body();
-    }
-
     private String chat(String userMessage) {
         if (!llmConfig.isEnabled() || llmConfig.getApiKey().isBlank() || llmConfig.getApiKey().equals("your-api-key-here")) {
             log.info("LLM未启用或API Key未配置: enabled={}, keyBlank={}", llmConfig.isEnabled(), llmConfig.getApiKey().isBlank());
             return null;
         }
-        try {
-            Map<String, Object> body = Map.of(
-                    "model", llmConfig.getModel(),
-                    "messages", List.of(
-                            Map.of("role", "system", "content", "你是Random随机决策应用的AI助手，回答简洁友好，使用中文。"),
-                            Map.of("role", "user", "content", userMessage)
-                    ),
-                    "temperature", 0.7,
-                    "max_tokens", 300
-            );
+        int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                Map<String, Object> body = Map.of(
+                        "model", llmConfig.getModel(),
+                        "messages", List.of(
+                                Map.of("role", "system", "content", "你是Random随机决策应用的AI助手，回答简洁友好，使用中文。"),
+                                Map.of("role", "user", "content", userMessage)
+                        ),
+                        "temperature", 0.7,
+                        "max_tokens", 300
+                );
 
-            String jsonBody = objectMapper.writeValueAsString(body);
+                String jsonBody = objectMapper.writeValueAsString(body);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(llmConfig.getBaseUrl() + "/chat/completions"))
-                    .timeout(Duration.ofMillis(llmConfig.getTimeout()))
-                    .header("Authorization", "Bearer " + llmConfig.getApiKey())
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                    .build();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(llmConfig.getBaseUrl() + "/chat/completions"))
+                        .timeout(Duration.ofMillis(llmConfig.getTimeout()))
+                        .header("Authorization", "Bearer " + llmConfig.getApiKey())
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                        .build();
 
-            log.info("正在调用LLM API: {}", llmConfig.getBaseUrl());
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            log.info("LLM API响应状态: {}, body长度: {}", response.statusCode(), response.body().length());
+                log.info("正在调用LLM API (尝试{}/{}): {}", attempt, maxRetries, llmConfig.getBaseUrl());
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                log.info("LLM API响应状态: {}, body长度: {}", response.statusCode(), response.body().length());
 
-            if (response.statusCode() == 200) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> respMap = objectMapper.readValue(response.body(), Map.class);
-                if (respMap.containsKey("choices")) {
+                if (response.statusCode() == 200) {
                     @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> choices = (List<Map<String, Object>>) respMap.get("choices");
-                    if (!choices.isEmpty()) {
+                    Map<String, Object> respMap = objectMapper.readValue(response.body(), Map.class);
+                    if (respMap.containsKey("choices")) {
                         @SuppressWarnings("unchecked")
-                        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                        return (String) message.get("content");
+                        List<Map<String, Object>> choices = (List<Map<String, Object>>) respMap.get("choices");
+                        if (!choices.isEmpty()) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                            return (String) message.get("content");
+                        }
                     }
+                } else {
+                    log.error("LLM API返回错误: status={}, body={}", response.statusCode(), response.body());
                 }
-            } else {
-                log.error("LLM API返回错误: status={}, body={}", response.statusCode(), response.body());
+                return null;
+            } catch (Exception e) {
+                log.error("LLM调用失败 (尝试{}/{}): {} - {}", attempt, maxRetries, e.getClass().getSimpleName(), e.getMessage());
+                if (attempt < maxRetries) {
+                    try { Thread.sleep(2000L * attempt); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+                }
             }
-        } catch (Exception e) {
-            log.error("LLM调用失败: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
         }
         return null;
     }

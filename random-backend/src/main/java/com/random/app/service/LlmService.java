@@ -24,9 +24,4 @@ public interface LlmService {
      * 决策解释：解释为什么推荐某个选项
      */
     String explainDecision(String chosenOption, List<String> alternatives, String timeOfDay, Map<String, Double> preferences);
-
-    /**
-     * 直接调用LLM，返回原始响应（用于调试）
-     */
-    String chatDirect(String userMessage);
 }
