@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -31,6 +33,7 @@ public class Decision {
     private Option chosenOption;
 
     @Column(name = "context_json")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String contextJson;
 
     @Column(name = "decided_at", nullable = false, updatable = false)
