@@ -86,6 +86,29 @@ public class LlmServiceImpl implements LlmService {
         return chat(prompt);
     }
 
+    @Override
+    public String chatDirect(String userMessage) throws Exception {
+        Map<String, Object> body = Map.of(
+                "model", llmConfig.getModel(),
+                "messages", List.of(
+                        Map.of("role", "system", "content", "你是Random随机决策应用的AI助手，回答简洁友好，使用中文。"),
+                        Map.of("role", "user", "content", userMessage)
+                ),
+                "temperature", 0.7,
+                "max_tokens", 300
+        );
+        String jsonBody = objectMapper.writeValueAsString(body);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(llmConfig.getBaseUrl() + "/chat/completions"))
+                .timeout(Duration.ofMillis(llmConfig.getTimeout()))
+                .header("Authorization", "Bearer " + llmConfig.getApiKey())
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        return "status=" + response.statusCode() + " body=" + response.body();
+    }
+
     private String chat(String userMessage) {
         if (!llmConfig.isEnabled() || llmConfig.getApiKey().isBlank() || llmConfig.getApiKey().equals("your-api-key-here")) {
             log.info("LLM未启用或API Key未配置: enabled={}, keyBlank={}", llmConfig.isEnabled(), llmConfig.getApiKey().isBlank());
