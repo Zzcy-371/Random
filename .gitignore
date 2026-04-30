@@ -1,0 +1,23 @@
+# Backend
+random-backend/target/
+random-backend/.idea/
+random-backend/*.iml
+random-backend/.mvn/
+
+# Frontend
+random-frontend/node_modules/
+random-frontend/dist/
+random-frontend/.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+*.env.local

@@ -1,0 +1,24 @@
+server:
+  port: ${PORT:3000}
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/random_app?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+jwt:
+  secret: ${JWT_SECRET:RandomAppSecretKey2026VeryLongSecretKeyForJwtTokenSigning}
+  expiration: 86400000
+
+llm:
+  enabled: ${LLM_ENABLED:false}
+  base-url: ${LLM_BASE_URL:https://api.siliconflow.cn/v1}
+  api-key: ${LLM_API_KEY:}
+  model: ${LLM_MODEL:Qwen/Qwen2.5-7B-Instruct}
+  timeout: 30000
