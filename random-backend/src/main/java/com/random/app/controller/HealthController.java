@@ -1,13 +1,16 @@
 package com.random.app.controller;
 
 import com.random.app.config.LlmConfig;
-import com.random.app.service.LlmService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -15,7 +18,6 @@ import java.util.Map;
 public class HealthController {
 
     private final LlmConfig llmConfig;
-    private final LlmService llmService;
 
     @GetMapping("/api/health")
     public Map<String, Object> health() {
@@ -32,12 +34,21 @@ public class HealthController {
         result.put("apiKeyMasked", masked);
         result.put("model", llmConfig.getModel());
 
-        // Actually test the LLM call
+        // Test connectivity to SiliconFlow
         try {
-            String testResult = llmService.getSmartRecommendation("测试", List.of("选项A", "选项B"), "下午", Map.of());
-            result.put("testCall", testResult != null ? "成功: " + testResult.substring(0, Math.min(50, testResult.length())) : "返回null");
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(10))
+                    .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(llmConfig.getBaseUrl() + "/models"))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("Authorization", "Bearer " + llmConfig.getApiKey())
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            result.put("connectivity", "status=" + response.statusCode() + ", bodyLen=" + response.body().length());
         } catch (Exception e) {
-            result.put("testCall", "异常: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            result.put("connectivity", "FAILED: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         return result;
     }
