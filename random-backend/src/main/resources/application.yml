@@ -1,6 +1,11 @@
 spring:
   profiles:
     active: dev
+  jpa:
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
   jackson:
     default-property-inclusion: non_null
     date-format: yyyy-MM-dd HH:mm:ss
