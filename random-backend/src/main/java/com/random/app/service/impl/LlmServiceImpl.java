@@ -59,18 +59,18 @@ public class LlmServiceImpl implements LlmService {
     @Override
     public List<String> suggestNewOptions(String category, List<String> existingOptions, Map<String, Double> preferences) {
         String prompt = String.format(
-                "你是一个生活助手。用户在「%s」类别下已有这些选项：%s。\n" +
-                "用户偏好：%s\n\n" +
-                "请推荐3个用户可能喜欢的新选项，直接输出选项名称，每个一行，不要编号，不要解释。",
-                category, String.join("、", existingOptions), formatPreferences(preferences)
+                "请为「%s」类别推荐3个新选项。已有：%s。" +
+                "只输出3个选项名称，每行一个，不要编号、不要解释、不要格式化。" +
+                "示例格式：\n麻辣烫\n烧烤\n米线",
+                category, String.join("、", existingOptions)
         );
         String response = chat(prompt);
         log.info("AI建议新选项 - 响应: {}", response);
         if (response == null || response.isBlank()) return List.of();
         return Arrays.stream(response.split("\n"))
                 .map(String::trim)
-                .map(s -> s.replaceAll("^\\d+[.、)）]\\s*", ""))
-                .filter(s -> !s.isEmpty())
+                .map(s -> s.replaceAll("^[#\\-*\\d]+[.、)）:：]?\\s*", ""))
+                .filter(s -> !s.isEmpty() && s.length() < 20)
                 .limit(3)
                 .toList();
     }
