@@ -34,21 +34,37 @@ public class HealthController {
         result.put("apiKeyMasked", masked);
         result.put("model", llmConfig.getModel());
 
-        // Test connectivity to SiliconFlow
+        // Test basic outbound connectivity
+        try {
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://httpbin.org/get"))
+                    .timeout(Duration.ofSeconds(10))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            result.put("outboundTest", "OK: status=" + response.statusCode());
+        } catch (Exception e) {
+            result.put("outboundTest", "FAILED: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+
+        // Test connectivity to SiliconFlow specifically
         try {
             HttpClient client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(10))
                     .build();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(llmConfig.getBaseUrl() + "/models"))
+                    .uri(URI.create("https://api.siliconflow.cn/v1/models"))
                     .timeout(Duration.ofSeconds(15))
                     .header("Authorization", "Bearer " + llmConfig.getApiKey())
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            result.put("connectivity", "status=" + response.statusCode() + ", bodyLen=" + response.body().length());
+            result.put("siliconFlowTest", "status=" + response.statusCode());
         } catch (Exception e) {
-            result.put("connectivity", "FAILED: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            result.put("siliconFlowTest", "FAILED: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         return result;
     }
