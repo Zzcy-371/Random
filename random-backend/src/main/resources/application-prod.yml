@@ -19,8 +19,8 @@ jwt:
   expiration: 86400000
 
 llm:
-  enabled: ${LLM_ENABLED:false}
-  base-url: ${LLM_BASE_URL:https://api.siliconflow.cn/v1}
-  api-key: ${LLM_API_KEY:}
-  model: ${LLM_MODEL:Qwen/Qwen2.5-7B-Instruct}
+  enabled: ${LLM_ENABLED:true}
+  base-url: ${LLM_BASE_URL:https://token-plan-cn.xiaomimimo.com/v1}
+  api-key: ${LLM_API_KEY:tp-carujz06z5grnyy3fr9eqbenhdkvptxel7vfu9efiwi5jsrn}
+  model: ${LLM_MODEL:mimo-v2.5-pro}
   timeout: 60000
