@@ -61,13 +61,15 @@ public class LlmServiceImpl implements LlmService {
         String prompt = String.format(
                 "你是一个生活助手。用户在「%s」类别下已有这些选项：%s。\n" +
                 "用户偏好：%s\n\n" +
-                "请推荐3个用户可能喜欢的新选项，每个选项一行，不要编号，不要解释。",
+                "请推荐3个用户可能喜欢的新选项，直接输出选项名称，每个一行，不要编号，不要解释。",
                 category, String.join("、", existingOptions), formatPreferences(preferences)
         );
         String response = chat(prompt);
+        log.info("AI建议新选项 - 响应: {}", response);
         if (response == null || response.isBlank()) return List.of();
         return Arrays.stream(response.split("\n"))
                 .map(String::trim)
+                .map(s -> s.replaceAll("^\\d+[.、)）]\\s*", ""))
                 .filter(s -> !s.isEmpty())
                 .limit(3)
                 .toList();
