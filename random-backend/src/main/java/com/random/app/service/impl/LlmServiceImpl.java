@@ -59,13 +59,11 @@ public class LlmServiceImpl implements LlmService {
     @Override
     public List<String> suggestNewOptions(String category, List<String> existingOptions, Map<String, Double> preferences) {
         String prompt = String.format(
-                "请为「%s」类别推荐3个新选项。已有：%s。" +
-                "只输出3个选项名称，每行一个，不要编号、不要解释、不要格式化。" +
-                "示例格式：\n麻辣烫\n烧烤\n米线",
+                "请为「%s」推荐3个新选项。已有：%s。只输出名称，每行一个。",
                 category, String.join("、", existingOptions)
         );
         String response = chat(prompt);
-        log.info("AI建议新选项 - 响应: {}", response);
+        log.info("AI建议新选项 - prompt长度: {}, 响应: {}", prompt.length(), response);
         if (response == null || response.isBlank()) return List.of();
         return Arrays.stream(response.split("\n"))
                 .map(String::trim)
@@ -101,7 +99,7 @@ public class LlmServiceImpl implements LlmService {
                                 Map.of("role", "user", "content", userMessage)
                         ),
                         "temperature", 0.7,
-                        "max_tokens", 300
+                        "max_tokens", 500
                 );
 
                 String jsonBody = objectMapper.writeValueAsString(body);
@@ -137,7 +135,7 @@ public class LlmServiceImpl implements LlmService {
             } catch (Exception e) {
                 log.error("LLM调用失败 (尝试{}/{}): {} - {}", attempt, maxRetries, e.getClass().getSimpleName(), e.getMessage());
                 if (attempt < maxRetries) {
-                    try { Thread.sleep(2000L * attempt); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+                    try { Thread.sleep(3000L * attempt); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
                 }
             }
         }
