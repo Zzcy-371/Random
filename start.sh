@@ -1,2 +1,2 @@
 #!/bin/sh
-exec java -Dserver.port=${PORT:-3000} -jar app.jar
+exec java -Dserver.port=${PORT:-10000} -jar app.jar

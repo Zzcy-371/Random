@@ -3,14 +3,16 @@ server:
 
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/random_app?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true}
-    username: ${DATABASE_USERNAME:root}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/random_app}
+    username: ${DATABASE_USERNAME:postgres}
     password: ${DATABASE_PASSWORD:}
-    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
 
 jwt:
   secret: ${JWT_SECRET:RandomAppSecretKey2026VeryLongSecretKeyForJwtTokenSigning}

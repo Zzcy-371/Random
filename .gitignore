@@ -18,6 +18,12 @@ random-frontend/.env.local
 .DS_Store
 Thumbs.db
 
+# Claude
+.claude/
+
 # Env
 .env
 *.env.local
+
+# Dev config (contains passwords)
+random-backend/src/main/resources/application-dev.yml
