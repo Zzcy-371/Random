@@ -23,4 +23,4 @@ llm:
   base-url: ${LLM_BASE_URL:https://api.siliconflow.cn/v1}
   api-key: ${LLM_API_KEY:}
   model: ${LLM_MODEL:Qwen/Qwen2.5-7B-Instruct}
-  timeout: 30000
+  timeout: 60000

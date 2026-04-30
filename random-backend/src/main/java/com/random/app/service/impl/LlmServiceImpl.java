@@ -113,7 +113,7 @@ public class LlmServiceImpl implements LlmService {
                 }
             }
         } catch (Exception e) {
-            log.warn("LLM调用失败: {}", e.getMessage());
+            log.error("LLM调用失败: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
         }
         return null;
     }
