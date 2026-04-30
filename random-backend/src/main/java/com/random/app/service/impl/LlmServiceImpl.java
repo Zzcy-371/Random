@@ -1,13 +1,18 @@
 package com.random.app.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.random.app.config.LlmConfig;
 import com.random.app.service.LlmService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.*;
 
 @Slf4j
@@ -16,6 +21,15 @@ import java.util.*;
 public class LlmServiceImpl implements LlmService {
 
     private final LlmConfig llmConfig;
+    private final ObjectMapper objectMapper;
+    private HttpClient httpClient;
+
+    @PostConstruct
+    public void init() {
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(llmConfig.getTimeout()))
+                .build();
+    }
 
     @Override
     public String getSmartRecommendation(String category, List<String> options, String timeOfDay, Map<String, Double> preferences) {
@@ -72,18 +86,10 @@ public class LlmServiceImpl implements LlmService {
 
     private String chat(String userMessage) {
         if (!llmConfig.isEnabled() || llmConfig.getApiKey().isBlank() || llmConfig.getApiKey().equals("your-api-key-here")) {
+            log.info("LLM未启用或API Key未配置: enabled={}, keyBlank={}", llmConfig.isEnabled(), llmConfig.getApiKey().isBlank());
             return null;
         }
         try {
-            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-            factory.setConnectTimeout(llmConfig.getTimeout());
-            factory.setReadTimeout(llmConfig.getTimeout());
-
-            RestClient restClient = RestClient.builder()
-                    .baseUrl(llmConfig.getBaseUrl())
-                    .requestFactory(factory)
-                    .build();
-
             Map<String, Object> body = Map.of(
                     "model", llmConfig.getModel(),
                     "messages", List.of(
@@ -94,23 +100,34 @@ public class LlmServiceImpl implements LlmService {
                     "max_tokens", 300
             );
 
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restClient.post()
-                    .uri("/chat/completions")
+            String jsonBody = objectMapper.writeValueAsString(body);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(llmConfig.getBaseUrl() + "/chat/completions"))
+                    .timeout(Duration.ofMillis(llmConfig.getTimeout()))
                     .header("Authorization", "Bearer " + llmConfig.getApiKey())
                     .header("Content-Type", "application/json")
-                    .body(body)
-                    .retrieve()
-                    .body(Map.class);
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
 
-            if (response != null && response.containsKey("choices")) {
+            log.info("正在调用LLM API: {}", llmConfig.getBaseUrl());
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            log.info("LLM API响应状态: {}, body长度: {}", response.statusCode(), response.body().length());
+
+            if (response.statusCode() == 200) {
                 @SuppressWarnings("unchecked")
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-                if (!choices.isEmpty()) {
+                Map<String, Object> respMap = objectMapper.readValue(response.body(), Map.class);
+                if (respMap.containsKey("choices")) {
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                    return (String) message.get("content");
+                    List<Map<String, Object>> choices = (List<Map<String, Object>>) respMap.get("choices");
+                    if (!choices.isEmpty()) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                        return (String) message.get("content");
+                    }
                 }
+            } else {
+                log.error("LLM API返回错误: status={}, body={}", response.statusCode(), response.body());
             }
         } catch (Exception e) {
             log.error("LLM调用失败: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
