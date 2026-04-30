@@ -3,7 +3,6 @@ package com.random.app.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.random.app.config.LlmConfig;
 import com.random.app.service.LlmService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,14 +21,6 @@ public class LlmServiceImpl implements LlmService {
 
     private final LlmConfig llmConfig;
     private final ObjectMapper objectMapper;
-    private HttpClient httpClient;
-
-    @PostConstruct
-    public void init() {
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(llmConfig.getTimeout()))
-                .build();
-    }
 
     @Override
     public String getSmartRecommendation(String category, List<String> options, String timeOfDay, Map<String, Double> preferences) {
@@ -84,7 +75,7 @@ public class LlmServiceImpl implements LlmService {
         return chat(prompt);
     }
 
-    private String chat(String userMessage) {
+    private synchronized String chat(String userMessage) {
         if (!llmConfig.isEnabled() || llmConfig.getApiKey().isBlank() || llmConfig.getApiKey().equals("your-api-key-here")) {
             log.info("LLM未启用或API Key未配置: enabled={}, keyBlank={}", llmConfig.isEnabled(), llmConfig.getApiKey().isBlank());
             return null;
@@ -92,6 +83,10 @@ public class LlmServiceImpl implements LlmService {
         int maxRetries = 3;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
+                HttpClient client = HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofMillis(llmConfig.getTimeout()))
+                        .build();
+
                 Map<String, Object> body = Map.of(
                         "model", llmConfig.getModel(),
                         "messages", List.of(
@@ -113,7 +108,7 @@ public class LlmServiceImpl implements LlmService {
                         .build();
 
                 log.info("正在调用LLM API (尝试{}/{}): {}", attempt, maxRetries, llmConfig.getBaseUrl());
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 log.info("LLM API响应状态: {}, body长度: {}", response.statusCode(), response.body().length());
 
                 if (response.statusCode() == 200) {
