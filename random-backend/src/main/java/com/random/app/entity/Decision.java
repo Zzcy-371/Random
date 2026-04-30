@@ -30,7 +30,7 @@ public class Decision {
     @JoinColumn(name = "chosen_option_id", nullable = false)
     private Option chosenOption;
 
-    @Column(name = "context_json", columnDefinition = "JSON")
+    @Column(name = "context_json")
     private String contextJson;
 
     @Column(name = "decided_at", nullable = false, updatable = false)
