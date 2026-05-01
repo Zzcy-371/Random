@@ -37,7 +37,10 @@ export default function ModulePage({ categorySlug }: ModulePageProps) {
       const res = await optionApi.list(categoryId);
       const opts: OptionVO[] = res.data.data;
       setOptions(opts);
-      setSelectedIds(new Set(opts.map(o => o.id)));
+      setSelectedIds(prev => {
+        const ids = new Set(opts.map(o => o.id));
+        return new Set([...prev].filter(id => ids.has(id)));
+      });
     } catch {
       // ignore
     } finally {
