@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/ui/Card';
 import { User, Mail, Calendar } from 'lucide-react';
+import { formatBeijingDate } from '../utils/formatDate';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ export default function ProfilePage() {
           )}
           <div className="flex items-center gap-3 text-gray-600">
             <Calendar size={18} />
-            <span>注册时间：{new Date(user.createdAt).toLocaleDateString('zh-CN')}</span>
+            <span>注册时间：{formatBeijingDate(user.createdAt)}</span>
           </div>
         </div>
       </Card>

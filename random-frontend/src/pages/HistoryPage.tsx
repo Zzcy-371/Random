@@ -6,6 +6,7 @@ import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
 import { Clock, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { formatBeijingTime } from '../utils/formatDate';
 
 export default function HistoryPage() {
   const [decisions, setDecisions] = useState<DecisionVO[]>([]);
@@ -68,7 +69,7 @@ export default function HistoryPage() {
                   <div>
                     <h3 className="font-medium text-gray-900">{decision.chosenOption.name}</h3>
                     <p className="text-xs text-gray-400 mt-1">
-                      {decision.chosenOption.categoryName} · {new Date(decision.decidedAt).toLocaleString('zh-CN')}
+                      {decision.chosenOption.categoryName} · {formatBeijingTime(decision.decidedAt)}
                     </p>
                   </div>
                   {decision.chosenOption.tags.length > 0 && (
