@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,7 +58,7 @@ public class DecisionServiceImpl implements DecisionService {
         List<Long> recentOptionIds = List.of();
         if (Boolean.TRUE.equals(dto.getExcludeRecent())) {
             int days = dto.getExcludeRecentDays() != null ? dto.getExcludeRecentDays() : 3;
-            LocalDateTime since = LocalDateTime.now().minusDays(days);
+            LocalDateTime since = LocalDateTime.now(ZoneId.of("Asia/Shanghai")).minusDays(days);
             recentOptionIds = decisionRepository.findRecentChosenOptionIds(userId, categoryId, since);
             if (!recentOptionIds.isEmpty()) {
                 List<Long> excludeIds = recentOptionIds;
@@ -160,7 +161,7 @@ public class DecisionServiceImpl implements DecisionService {
     }
 
     private String buildContextJson(DecideRequestDTO dto) {
-        int hour = LocalDateTime.now().getHour();
+        int hour = LocalDateTime.now(ZoneId.of("Asia/Shanghai")).getHour();
         String timeOfDay;
         if (hour >= 6 && hour < 11) timeOfDay = "morning";
         else if (hour >= 11 && hour < 14) timeOfDay = "noon";

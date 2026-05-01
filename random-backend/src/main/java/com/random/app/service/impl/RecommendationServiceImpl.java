@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,7 +30,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     @Override
     public DailyRecommendationVO getDailyRecommendations(Long userId) {
-        int hour = LocalDateTime.now().getHour();
+        int hour = LocalDateTime.now(ZoneId.of("Asia/Shanghai")).getHour();
         TimePeriod period = getTimePeriod(hour);
 
         Map<String, List<OptionVO>> recommendations = new LinkedHashMap<>();
@@ -40,7 +41,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             if (options.isEmpty()) continue;
 
             // Exclude options chosen today
-            LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
+            LocalDateTime todayStart = LocalDateTime.now(ZoneId.of("Asia/Shanghai")).toLocalDate().atStartOfDay();
             List<Long> chosenToday = decisionRepository.findRecentChosenOptionIds(userId, cat.getId(), todayStart);
             List<Option> available = options.stream()
                     .filter(o -> !chosenToday.contains(o.getId()))

@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,7 @@ public class AiController {
     }
 
     private String getTimeOfDay() {
-        int hour = LocalDateTime.now().getHour();
+        int hour = LocalDateTime.now(ZoneId.of("Asia/Shanghai")).getHour();
         if (hour >= 6 && hour < 11) return "早晨";
         if (hour >= 11 && hour < 14) return "中午";
         if (hour >= 14 && hour < 18) return "下午";
