@@ -5,6 +5,7 @@ export interface DecideRequest {
   preferenceFilters?: string[];
   excludeRecent?: boolean;
   excludeRecentDays?: number;
+  optionIds?: number[];
 }
 
 export interface DecisionVO {

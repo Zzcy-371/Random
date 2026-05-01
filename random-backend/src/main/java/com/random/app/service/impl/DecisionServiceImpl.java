@@ -41,6 +41,17 @@ public class DecisionServiceImpl implements DecisionService {
             throw new BusinessException("该分类下没有可用选项，请先添加");
         }
 
+        // Step 1.5: Filter by selected option IDs
+        if (dto.getOptionIds() != null && !dto.getOptionIds().isEmpty()) {
+            List<Long> ids = dto.getOptionIds();
+            allOptions = allOptions.stream()
+                    .filter(opt -> ids.contains(opt.getId()))
+                    .toList();
+            if (allOptions.isEmpty()) {
+                throw new BusinessException("选中的选项不存在或已失效");
+            }
+        }
+
         // Step 2: Filter by preference tags
         List<Option> candidates = allOptions;
         if (dto.getPreferenceFilters() != null && !dto.getPreferenceFilters().isEmpty()) {

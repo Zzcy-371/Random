@@ -22,6 +22,7 @@ export default function ModulePage({ categorySlug }: ModulePageProps) {
   const displayName = CATEGORY_DISPLAY_NAMES[categorySlug];
 
   const [options, setOptions] = useState<OptionVO[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editOption, setEditOption] = useState<OptionVO | null>(null);
@@ -29,11 +30,14 @@ export default function ModulePage({ categorySlug }: ModulePageProps) {
   const [isDeciding, setIsDeciding] = useState(false);
   const [showSlot, setShowSlot] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [hint, setHint] = useState('');
 
   const loadOptions = useCallback(async () => {
     try {
       const res = await optionApi.list(categoryId);
-      setOptions(res.data.data);
+      const opts: OptionVO[] = res.data.data;
+      setOptions(opts);
+      setSelectedIds(new Set(opts.map(o => o.id)));
     } catch {
       // ignore
     } finally {
@@ -44,6 +48,18 @@ export default function ModulePage({ categorySlug }: ModulePageProps) {
   useEffect(() => {
     loadOptions();
   }, [loadOptions]);
+
+  const handleToggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => setSelectedIds(new Set(options.map(o => o.id)));
+  const handleDeselectAll = () => setSelectedIds(new Set());
 
   const handleAddSuggestion = async (name: string) => {
     await optionApi.create(categoryId, { name });
@@ -69,14 +85,18 @@ export default function ModulePage({ categorySlug }: ModulePageProps) {
   };
 
   const handleDecide = async () => {
-    if (options.length < 2) return;
+    if (selectedIds.size < 2) {
+      setHint('请至少选择2个选项进行随机决策');
+      return;
+    }
+    setHint('');
     setIsDeciding(true);
     setShowSlot(true);
     setDecision(null);
     setShowFeedback(false);
 
     try {
-      const res = await decisionApi.decide(categoryId);
+      const res = await decisionApi.decide(categoryId, { optionIds: Array.from(selectedIds) });
       setDecision(res.data.data);
     } catch {
       setIsDeciding(false);
@@ -96,6 +116,8 @@ export default function ModulePage({ categorySlug }: ModulePageProps) {
       </div>
     );
   }
+
+  const selectedOptions = options.filter(o => selectedIds.has(o.id));
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -117,17 +139,27 @@ export default function ModulePage({ categorySlug }: ModulePageProps) {
           onEdit={(opt) => { setEditOption(opt); setShowForm(true); }}
           onDelete={handleDelete}
           onAdd={() => { setEditOption(null); setShowForm(true); }}
+          selectable
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
+          onSelectAll={handleSelectAll}
+          onDeselectAll={handleDeselectAll}
         />
+
+        {/* Hint */}
+        {hint && (
+          <p className="text-center text-sm text-amber-600 mt-3">{hint}</p>
+        )}
 
         {/* Decide Button */}
         {options.length >= 2 && (
-          <DecideButton onClick={handleDecide} disabled={options.length < 2} loading={isDeciding} />
+          <DecideButton onClick={handleDecide} loading={isDeciding} />
         )}
 
         {/* Slot Machine */}
         {showSlot && decision && (
           <SlotMachine
-            options={options}
+            options={selectedOptions}
             result={decision.chosenOption}
             isSpinning={isDeciding}
             onComplete={handleSlotComplete}
