@@ -109,7 +109,7 @@ export default function ModulePage({ categorySlug }: ModulePageProps) {
         </div>
 
         {/* AI Panel */}
-        <AiPanel categorySlug={categorySlug} onAddSuggestion={handleAddSuggestion} />
+        <AiPanel categorySlug={categorySlug} optionCount={options.length} onAddSuggestion={handleAddSuggestion} />
 
         {/* Options */}
         <OptionList
