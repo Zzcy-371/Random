@@ -2,6 +2,7 @@ package com.random.app.controller;
 
 import com.random.app.dto.LoginDTO;
 import com.random.app.dto.RegisterDTO;
+import com.random.app.dto.WxLoginDTO;
 import com.random.app.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,15 @@ public class AuthController {
         result.put("code", 1);
         result.put("msg", "登录成功");
         result.put("data", authService.login(dto));
+        return result;
+    }
+
+    @PostMapping("/wx-login")
+    public Map<String, Object> wxLogin(@Valid @RequestBody WxLoginDTO dto) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 1);
+        result.put("msg", "登录成功");
+        result.put("data", authService.wxLogin(dto));
         return result;
     }
 

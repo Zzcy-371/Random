@@ -18,6 +18,10 @@ jwt:
   secret: ${JWT_SECRET:RandomAppSecretKey2026VeryLongSecretKeyForJwtTokenSigning}
   expiration: 86400000
 
+wx:
+  appid: ${WX_APPID:wx679490ea9d55c660}
+  secret: ${WX_SECRET:}
+
 llm:
   enabled: ${LLM_ENABLED:true}
   base-url: ${LLM_BASE_URL:https://token-plan-cn.xiaomimimo.com/v1}

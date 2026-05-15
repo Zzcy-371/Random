@@ -21,7 +21,7 @@ public class User {
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(name = "nickname", length = 100)
@@ -32,6 +32,9 @@ public class User {
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
+
+    @Column(name = "wx_openid", unique = true, length = 100)
+    private String wxOpenid;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
