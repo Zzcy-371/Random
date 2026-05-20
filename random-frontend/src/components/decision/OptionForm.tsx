@@ -6,7 +6,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Tag from '../ui/Tag';
 import { MODULE_TAGS } from '../../utils/constants';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const schema = z.object({
   name: z.string().min(1, '名称不能为空').max(200),
@@ -38,6 +38,21 @@ export default function OptionForm({ isOpen, onClose, onSubmit, categorySlug, ed
       tags: editOption?.tags?.join(', ') || '',
     },
   });
+
+  // Sync form when editOption changes (reopening modal for different option)
+  useEffect(() => {
+    if (editOption) {
+      setSelectedTags(editOption.tags || []);
+      reset({
+        name: editOption.name || '',
+        description: editOption.description || '',
+        tags: editOption.tags?.join(', ') || '',
+      });
+    } else {
+      setSelectedTags([]);
+      reset({ name: '', description: '', tags: '' });
+    }
+  }, [editOption, reset]);
 
   const handleFormSubmit = async (data: FormData) => {
     await onSubmit({
